@@ -1,4 +1,8 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AllyFix - Web Accessibility Auditor
+
+A fast, affordable web accessibility auditor for indie devs and small teams. Scan any public URL, get WCAG compliance scores, and fix issues with exact code solutions.
+
+Built with Next.js 14, TypeScript, Puppeteer, axe-core, and rule-based fix generation.
 
 ## Getting Started
 
