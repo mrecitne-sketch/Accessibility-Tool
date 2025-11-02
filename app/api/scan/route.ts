@@ -32,6 +32,8 @@ export async function POST(request: NextRequest) {
 
     // Create scan record
     const supabase = await createAdminClient();
+    console.log('Admin client URL:', process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 30));
+    console.log('Service role key exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
     const { data: scanData, error: scanError } = await supabase
       .from('scans')
       .insert({
@@ -43,8 +45,9 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (scanError || !scanData) {
+      console.error('Scan creation error:', scanError);
       return NextResponse.json(
-        { error: 'Failed to create scan' },
+        { error: 'Failed to create scan', details: scanError?.message },
         { status: 500 }
       );
     }

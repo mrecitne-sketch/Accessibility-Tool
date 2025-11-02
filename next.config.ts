@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
     };
     return config;
   },
+  // Configure API routes
+  async rewrites() {
+    return [];
+  },
 };
 
 export default nextConfig;

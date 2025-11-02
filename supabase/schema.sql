@@ -7,6 +7,8 @@ CREATE TABLE users (
   email TEXT UNIQUE NOT NULL,
   subscription_tier TEXT NOT NULL DEFAULT 'free' CHECK (subscription_tier IN ('free', 'pro')),
   scans_used_this_month INTEGER NOT NULL DEFAULT 0,
+  stripe_customer_id TEXT, -- Store Stripe customer ID
+  stripe_subscription_id TEXT, -- Store Stripe subscription ID
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -27,6 +29,7 @@ CREATE TABLE scans (
 CREATE INDEX idx_scans_user_id ON scans(user_id);
 CREATE INDEX idx_scans_created_at ON scans(created_at DESC);
 CREATE INDEX idx_users_subscription_tier ON users(subscription_tier);
+CREATE INDEX idx_users_stripe_customer_id ON users(stripe_customer_id);
 
 -- Row Level Security Policies
 
@@ -36,6 +39,10 @@ ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can read own data"
   ON users FOR SELECT
   USING (auth.uid() = id);
+
+CREATE POLICY "Users can insert own data"
+  ON users FOR INSERT
+  WITH CHECK (auth.uid() = id);
 
 CREATE POLICY "Users can update own data"
   ON users FOR UPDATE
