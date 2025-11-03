@@ -77,6 +77,12 @@ export default function Home() {
     return null;
   };
 
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return 'bg-green-400';
+    if (score >= 50) return 'bg-orange-400';
+    return 'bg-red-400';
+  };
+
   const handleScan = async (url: string) => {
     setIsScanning(true);
     try {
@@ -676,40 +682,33 @@ export default function Home() {
             ) : (
               <div className="rounded-lg backdrop-blur-md bg-gray-800/40 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15)] overflow-hidden mt-8">
                 <div className="overflow-x-auto">
-                  <table className="w-full">
+                  <table className="w-full border-collapse">
                     <thead className="bg-gray-900/50 border-b border-gray-700">
                       <tr>
                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                           #
                         </th>
                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                          Site
+                          SITE
                         </th>
                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                          Overall
+                          OVERALL
                         </th>
-                        <th colSpan={4} className="px-6 py-4 text-center text-xs font-medium text-gray-400 uppercase tracking-wider border-l border-gray-700">
-                          WCAG Principles
+                        <th className="px-6 py-4 text-center text-xs font-medium text-gray-400 uppercase tracking-wider border-l border-gray-700">
+                          PERCEIVABLE
+                        </th>
+                        <th className="px-6 py-4 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">
+                          OPERABLE
+                        </th>
+                        <th className="px-6 py-4 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">
+                          UNDERSTANDABLE
+                        </th>
+                        <th className="px-6 py-4 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">
+                          ROBUST
                         </th>
                         <th className="px-6 py-4 text-left text-xs font-medium text-gray-400 uppercase tracking-wider border-l border-gray-700">
-                          Date
+                          DATE
                         </th>
-                      </tr>
-                      <tr>
-                        <th colSpan={3} className="px-6 py-2"></th>
-                        <th className="px-6 py-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wider border-l border-gray-700">
-                          Perceivable
-                        </th>
-                        <th className="px-6 py-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">
-                          Operable
-                        </th>
-                        <th className="px-6 py-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">
-                          Understandable
-                        </th>
-                        <th className="px-6 py-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wider">
-                          Robust
-                        </th>
-                        <th className="px-6 py-2"></th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-700">
@@ -735,30 +734,43 @@ export default function Home() {
                             <div className="text-xs text-gray-400 mt-1">{entry.url}</div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap">
-                            <span className="text-green-400 font-bold text-lg">
-                              {entry.score} <span className="text-gray-400 font-normal text-sm">/100</span>
+                            <span className="text-green-400 font-bold text-xl">
+                              {entry.score}
                             </span>
+                            <span className="text-gray-400 font-normal text-sm ml-1">/100</span>
                           </td>
                           {/* WCAG Principles - Using estimated scores based on overall score */}
                           <td className="px-6 py-4 text-center whitespace-nowrap border-l border-gray-700">
-                            <span className="text-green-400 font-medium">
-                              {Math.min(100, Math.max(0, (entry.score || 0) + ((entry.rank % 3) - 1)))}
-                            </span>
+                            <div className="flex items-center justify-center gap-2">
+                              <div className={`w-2 h-2 rounded-full ${getScoreColor(Math.min(100, Math.max(0, (entry.score || 0) + ((entry.rank % 3) - 1))))}`}></div>
+                              <span className="text-gray-300 font-normal text-sm">
+                                {Math.min(100, Math.max(0, (entry.score || 0) + ((entry.rank % 3) - 1)))}
+                              </span>
+                            </div>
                           </td>
                           <td className="px-6 py-4 text-center whitespace-nowrap">
-                            <span className="text-green-400 font-medium">
-                              {Math.min(100, Math.max(0, (entry.score || 0) + ((entry.rank % 5) - 2)))}
-                            </span>
+                            <div className="flex items-center justify-center gap-2">
+                              <div className={`w-2 h-2 rounded-full ${getScoreColor(Math.min(100, Math.max(0, (entry.score || 0) + ((entry.rank % 5) - 2))))}`}></div>
+                              <span className="text-gray-300 font-normal text-sm">
+                                {Math.min(100, Math.max(0, (entry.score || 0) + ((entry.rank % 5) - 2)))}
+                              </span>
+                            </div>
                           </td>
                           <td className="px-6 py-4 text-center whitespace-nowrap">
-                            <span className="text-green-400 font-medium">
-                              {Math.min(100, Math.max(0, (entry.score || 0) - ((entry.rank % 3))))}
-                            </span>
+                            <div className="flex items-center justify-center gap-2">
+                              <div className={`w-2 h-2 rounded-full ${getScoreColor(Math.min(100, Math.max(0, (entry.score || 0) - ((entry.rank % 3)))))}`}></div>
+                              <span className="text-gray-300 font-normal text-sm">
+                                {Math.min(100, Math.max(0, (entry.score || 0) - ((entry.rank % 3))))}
+                              </span>
+                            </div>
                           </td>
                           <td className="px-6 py-4 text-center whitespace-nowrap">
-                            <span className="text-green-400 font-medium">
-                              {Math.min(100, Math.max(0, (entry.score || 0) + ((entry.rank % 4) - 1)))}
-                            </span>
+                            <div className="flex items-center justify-center gap-2">
+                              <div className={`w-2 h-2 rounded-full ${getScoreColor(Math.min(100, Math.max(0, (entry.score || 0) + ((entry.rank % 4) - 1))))}`}></div>
+                              <span className="text-gray-300 font-normal text-sm">
+                                {Math.min(100, Math.max(0, (entry.score || 0) + ((entry.rank % 4) - 1)))}
+                              </span>
+                            </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-gray-400 text-sm border-l border-gray-700">
                             {formatTimeAgo(entry.created_at)}

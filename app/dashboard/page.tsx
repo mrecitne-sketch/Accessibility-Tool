@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { Nav } from '@/components/nav';
 import { DashboardStats } from '@/components/dashboard-stats';
 import { RecentScans } from '@/components/recent-scans';
+import { TrendsChart } from '@/components/trends-chart';
 import { UsageCard } from '@/components/usage-card';
 import { QuickActions } from '@/components/quick-actions';
 import { SubscriptionCard } from '@/components/subscription-card';
@@ -133,13 +134,13 @@ export default async function DashboardPage() {
     );
   }
 
-  // Get user's recent scans
+  // Get user's recent scans (increase limit to get more data for trends)
   const { data: scans, error: scansError } = await supabase
     .from('scans')
     .select('*')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
-    .limit(10);
+    .limit(50);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-950 via-gray-900 to-gray-950">
@@ -170,6 +171,7 @@ export default async function DashboardPage() {
             {/* Left Column - Main Content */}
             <div className="lg:col-span-2 space-y-6">
               <QuickActions subscriptionTier={userData.subscription_tier} />
+              <TrendsChart scans={scans || []} />
               <RecentScans scans={scans || []} />
             </div>
 
