@@ -26,7 +26,7 @@ export function ScanForm({ onScan, isScanning = false }: ScanFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="w-full max-w-2xl mx-auto">
-      <div className="flex gap-3">
+      <div className="flex flex-col md:flex-row gap-3">
         <div className="flex-1 relative">
           <Globe className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 z-10 pointer-events-none" />
           <input
@@ -47,7 +47,7 @@ export function ScanForm({ onScan, isScanning = false }: ScanFormProps) {
         <button
           type="submit"
           disabled={isScanning}
-          className={`px-8 py-4 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold ${
+          className={`w-full md:w-auto px-8 py-4 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all font-semibold ${
             isScanning 
               ? 'bg-gradient-to-r from-gray-600 to-gray-700' 
               : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:opacity-90'

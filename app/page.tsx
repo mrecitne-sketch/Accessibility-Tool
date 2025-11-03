@@ -17,6 +17,7 @@ export default function Home() {
   const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [leaderboardLoading, setLeaderboardLoading] = useState(true);
   const [timeFilter, setTimeFilter] = useState<'all' | '24h' | '30d'>('all');
+  const [stats, setStats] = useState<{ totalScans: number; totalIssues: number; averageScore: number; averageScanTimeSec: number | null } | null>(null);
 
   useEffect(() => {
     const error = searchParams.get('error');
@@ -52,6 +53,36 @@ export default function Home() {
 
     fetchLeaderboard();
   }, [timeFilter]);
+
+  // Fetch public stats for cards
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch('/api/stats', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        setStats(data);
+      } catch (e) {
+        // ignore
+      }
+    };
+    fetchStats();
+  }, []);
+
+  const formatCompact = (num: number | null | undefined) => {
+    if (!num || num <= 0) return '0';
+    if (num >= 1_000_000) return `${Math.floor(num / 1_000_000)}M+`;
+    if (num >= 100_000) return `${Math.floor(num / 1_000)}K+`;
+    if (num >= 10_000) return `${(num / 1000).toFixed(1)}K`;
+    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+    return `${num}`;
+  };
+
+  const formatMinutes = (sec: number | null) => {
+    if (sec == null) return '—';
+    const mins = Math.round(sec / 60);
+    return `${mins} min`;
+  };
 
   const formatTimeAgo = (dateString: string) => {
     const date = new Date(dateString);
@@ -273,42 +304,34 @@ export default function Home() {
             Our comprehensive toolkit helps you identify, understand, and fix accessibility issues to make the web inclusive for everyone.
           </p>
 
-          {/* Feature Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-12 max-w-7xl mx-auto">
+          {/* Feature Cards (Metrics) */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mt-12 max-w-7xl mx-auto">
             {/* Card 1: 50K+ Websites Analyzed */}
-            <div className="rounded-lg backdrop-blur-md bg-gray-800/40 p-6 text-center space-y-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15)] aspect-[5/3] w-full">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto bg-gradient-to-br from-green-500 to-emerald-500">
-                <CheckCircle className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-4xl font-bold text-white">50K+</div>
-              <div className="text-sm text-white">Websites Analyzed</div>
+            <div className="rounded-lg backdrop-blur-md bg-gray-800/40 p-4 sm:p-6 text-center space-y-3 sm:space-y-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15)] w-full">
+              <CheckCircle className="w-10 h-10 mx-auto text-green-400 drop-shadow-[0_0_6px_rgba(34,197,94,0.35)]" />
+              <div className="text-3xl sm:text-4xl font-bold text-white">{formatCompact(stats?.totalScans || 0)}</div>
+              <div className="text-xs sm:text-sm text-white">Websites Analyzed</div>
             </div>
 
             {/* Card 2: 500K+ Issues Identified */}
-            <div className="rounded-lg backdrop-blur-md bg-gray-800/40 p-6 text-center space-y-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15)] aspect-[5/3] w-full">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto bg-gradient-to-br from-orange-500 to-red-500">
-                <AlertTriangle className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-4xl font-bold text-white">500K+</div>
-              <div className="text-sm text-white">Issues Identified</div>
+            <div className="rounded-lg backdrop-blur-md bg-gray-800/40 p-4 sm:p-6 text-center space-y-3 sm:space-y-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15)] w-full">
+              <AlertTriangle className="w-10 h-10 mx-auto text-yellow-400 drop-shadow-[0_0_6px_rgba(251,191,36,0.35)]" />
+              <div className="text-3xl sm:text-4xl font-bold text-white">{formatCompact(stats?.totalIssues || 0)}</div>
+              <div className="text-xs sm:text-sm text-white">Issues Identified</div>
             </div>
 
             {/* Card 3: 98% Accuracy Rate */}
-            <div className="rounded-lg backdrop-blur-md bg-gray-800/40 p-6 text-center space-y-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15)] aspect-[5/3] w-full">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto bg-gradient-to-br from-blue-500 to-cyan-500">
-                <Target className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-4xl font-bold text-white">98%</div>
-              <div className="text-sm text-white">Accuracy Rate</div>
+            <div className="rounded-lg backdrop-blur-md bg-gray-800/40 p-4 sm:p-6 text-center space-y-3 sm:space-y-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15)] w-full">
+              <Target className="w-10 h-10 mx-auto text-blue-400 drop-shadow-[0_0_6px_rgba(96,165,250,0.35)]" />
+              <div className="text-3xl sm:text-4xl font-bold text-white">{(stats?.averageScore ?? 0)}%</div>
+              <div className="text-xs sm:text-sm text-white">Accuracy Rate</div>
             </div>
 
             {/* Card 4: 2 min Average Scan Time */}
-            <div className="rounded-lg backdrop-blur-md bg-gray-800/40 p-6 text-center space-y-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15)] aspect-[5/3] w-full">
-              <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto bg-gradient-to-br from-indigo-500 to-purple-500">
-                <Zap className="w-6 h-6 text-white" />
-              </div>
-              <div className="text-4xl font-bold text-white">2 min</div>
-              <div className="text-sm text-white">Average Scan Time</div>
+            <div className="rounded-lg backdrop-blur-md bg-gray-800/40 p-4 sm:p-6 text-center space-y-3 sm:space-y-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15)] w-full">
+              <Zap className="w-10 h-10 mx-auto text-purple-400 drop-shadow-[0_0_6px_rgba(192,132,252,0.35)]" />
+              <div className="text-3xl sm:text-4xl font-bold text-white">{formatMinutes(stats?.averageScanTimeSec ?? null)}</div>
+              <div className="text-xs sm:text-sm text-white">Average Scan Time</div>
             </div>
           </div>
 
@@ -412,7 +435,7 @@ export default function Home() {
             {/* Pricing Cards */}
             <div className="grid md:grid-cols-3 gap-8 mt-12 max-w-7xl mx-auto">
               {/* Free Plan */}
-              <div className="rounded-lg backdrop-blur-md bg-gray-800/40 p-8 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15)] aspect-[5/3] w-full">
+              <div className="rounded-lg backdrop-blur-md bg-gray-800/40 p-8 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15)] w-full">
                 <h3 className="text-2xl font-bold mb-2 text-white">Free</h3>
                 <p className="text-sm text-gray-300 mb-6">Perfect for trying out our service</p>
                 <div className="text-4xl font-bold mb-8 text-white">$0</div>
@@ -444,7 +467,7 @@ export default function Home() {
               </div>
 
               {/* Professional Plan - Highlighted */}
-              <div className="rounded-lg backdrop-blur-md bg-gray-800/40 p-8 relative shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15)] aspect-[5/3] w-full">
+              <div className="rounded-lg backdrop-blur-md bg-gray-800/40 p-8 relative shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15)] w-full">
                 <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-1.5 rounded-full text-sm font-medium">
                   Most Popular
                 </div>
@@ -483,7 +506,7 @@ export default function Home() {
               </div>
 
               {/* Enterprise Plan */}
-              <div className="rounded-lg backdrop-blur-md bg-gray-800/40 p-8 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15)] aspect-[5/3] w-full">
+              <div className="rounded-lg backdrop-blur-md bg-gray-800/40 p-8 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15)] w-full">
                 <h3 className="text-2xl font-bold mb-2 text-white">Enterprise</h3>
                 <p className="text-sm text-gray-300 mb-6">For large organizations with advanced needs</p>
                 <div className="text-4xl font-bold mb-8 text-white">Custom</div>

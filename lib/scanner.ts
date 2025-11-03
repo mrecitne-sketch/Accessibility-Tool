@@ -1,5 +1,6 @@
 import puppeteer from 'puppeteer';
 import AxeBuilder from '@axe-core/puppeteer';
+import { getBrowserPool } from '@/lib/browser-pool';
 import { Violation, ViolationImpact } from '@/types/scan';
 
 export interface ScanResult {
@@ -26,26 +27,44 @@ export async function scanURL(url: string): Promise<ScanResult> {
     throw new Error('Invalid URL format');
   }
 
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  });
-
+  const pool = getBrowserPool(3);
+  const startTs = Date.now();
+  const { page, release } = await pool.acquirePage();
   try {
-    const page = await browser.newPage();
+    // Abort non-essential requests to speed up scans
+    await page.setRequestInterception(true);
+    const blockedResourceTypes = new Set(['image', 'media', 'font']);
+    const blockedUrlFragments = [
+      'google-analytics.com',
+      'googletagmanager.com',
+      'doubleclick.net',
+      'facebook.net',
+      'hotjar',
+      'segment.io',
+    ];
+    page.on('request', (req) => {
+      const url = req.url();
+      if (blockedResourceTypes.has(req.resourceType()) || blockedUrlFragments.some(f => url.includes(f))) {
+        return req.abort();
+      }
+      return req.continue();
+    });
     
-    // Set a reasonable timeout
+    // Navigate fast: DOMContentLoaded is enough for axe (we handle dynamic waits below)
     await page.goto(url, {
-      waitUntil: 'networkidle2',
-      timeout: 30000,
+      waitUntil: 'domcontentloaded',
+      timeout: 25000,
     });
 
     // Wait for dynamic content to load
     // This ensures React, Vue, and other SPAs have time to render
     await waitForDynamicContent(page);
 
-    // Run axe accessibility scan
-    const builder = new AxeBuilder(page);
+    // Run axe accessibility scan (limit to A/AA for speed)
+    const builder = new AxeBuilder(page).withTags([
+      'wcag2a', 'wcag21a', 'wcag22a',
+      'wcag2aa', 'wcag21aa', 'wcag22aa',
+    ]);
     const results = await builder.analyze();
 
     // Process violations
@@ -89,7 +108,7 @@ export async function scanURL(url: string): Promise<ScanResult> {
       level,
     };
   } finally {
-    await browser.close();
+    await release();
   }
 }
 

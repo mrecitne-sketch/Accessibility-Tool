@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
 
     // Perform the scan
     let scanResult;
+    const startedAt = Date.now();
     try {
       scanResult = await scanURL(url);
     } catch (error) {
@@ -68,6 +69,8 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    const durationMs = Date.now() - startedAt;
 
     // Generate fixes for violations
     const violationsWithFixes = scanResult.violations.map((violation: Violation) => {
@@ -86,14 +89,21 @@ export async function POST(request: NextRequest) {
         score: scanResult.score,
         level: scanResult.level,
         violations_data: violationsWithFixes,
+        duration_ms: durationMs,
       })
       .eq('id', scanData.id);
 
     if (updateError) {
-      return NextResponse.json(
-        { error: 'Failed to update scan results' },
-        { status: 500 }
-      );
+      // If duration_ms column doesn't exist yet, try again without it
+      await supabase
+        .from('scans')
+        .update({
+          status: 'completed',
+          score: scanResult.score,
+          level: scanResult.level,
+          violations_data: violationsWithFixes,
+        })
+        .eq('id', scanData.id);
     }
 
     // Increment scan count for authenticated users
@@ -106,6 +116,7 @@ export async function POST(request: NextRequest) {
       score: scanResult.score,
       level: scanResult.level,
       violations: violationsWithFixes,
+      durationMs,
     });
 
   } catch (error) {

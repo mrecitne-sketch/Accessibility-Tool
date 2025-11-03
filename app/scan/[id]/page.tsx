@@ -269,18 +269,20 @@ export default function ScanResultsPage() {
       <Nav variant="light" />
       <div className="container mx-auto px-4 py-8">
         {/* Top Navigation Bar */}
-        <div className="mb-8 flex items-center justify-between">
-          <button
-            onClick={() => router.push('/')}
-            className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Back to Home</span>
-          </button>
-          <div className="flex items-center space-x-3">
+        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <button
+              onClick={() => router.push('/')}
+              className="flex items-center space-x-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" />
+              <span>Back to Home</span>
+            </button>
+          </div>
+          <div className="flex flex-col xs:flex-row items-stretch sm:items-center gap-3 sm:gap-3 sm:justify-end w-full sm:w-auto">
             <button
               onClick={handleShare}
-              className="flex items-center space-x-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-medium py-2.5 px-5 rounded-lg transition-colors"
+              className="flex items-center justify-center space-x-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-900 dark:text-white font-medium py-2.5 px-5 rounded-lg transition-colors w-full sm:w-auto"
             >
               <Share2 className="w-5 h-5" />
               <span>Share</span>
@@ -288,7 +290,7 @@ export default function ScanResultsPage() {
             <button
               onClick={handleExportPDF}
               disabled={isGeneratingPDF}
-              className="flex items-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 px-5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex items-center justify-center space-x-2 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2.5 px-5 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full sm:w-auto"
             >
               <Download className="w-5 h-5" />
               <span>{isGeneratingPDF ? 'Generating PDF...' : 'Export PDF'}</span>

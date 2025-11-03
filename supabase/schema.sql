@@ -21,6 +21,7 @@ CREATE TABLE scans (
   score INTEGER, -- 0-100 compliance score
   level TEXT CHECK (level IN ('A', 'AA', 'AAA', 'fail')),
   violations_data JSONB, -- Store violations array
+  duration_ms INTEGER, -- Duration of the scan in milliseconds
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   expires_at TIMESTAMPTZ -- For temporary scans
 );
