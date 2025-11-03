@@ -32,6 +32,16 @@ CREATE INDEX idx_scans_created_at ON scans(created_at DESC);
 CREATE INDEX idx_users_subscription_tier ON users(subscription_tier);
 CREATE INDEX idx_users_stripe_customer_id ON users(stripe_customer_id);
 
+-- Integrations table (GitHub App installations)
+CREATE TABLE IF NOT EXISTS integrations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  provider TEXT NOT NULL CHECK (provider IN ('github')),
+  installation_id BIGINT,
+  repos JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Row Level Security Policies
 
 -- Users can read and update their own data

@@ -7,6 +7,10 @@ import { ComplianceScore } from '@/components/compliance-score';
 import { CodeDiff } from '@/components/code-diff';
 import { ChevronDown, ChevronUp, Download, Share2, ArrowLeft, Calendar, XCircle, AlertTriangle, Info } from 'lucide-react';
 import { Violation } from '@/types/scan';
+import { FixModal } from '@/components/fix-modal';
+import { ApplyLocallyDrawer } from '@/components/apply-locally-drawer';
+import { GithubConnectBanner } from '@/components/github-connect-banner';
+import { CreatePrModal } from '@/components/create-pr-modal';
 import { PDFDocument } from '@/components/pdf-document';
 import { pdf } from '@react-pdf/renderer';
 
@@ -29,6 +33,15 @@ export default function ScanResultsPage() {
   const [expandedViolations, setExpandedViolations] = useState<Set<string>>(new Set());
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+  const [fixModalOpen, setFixModalOpen] = useState(false);
+  const [selectedViolationKey, setSelectedViolationKey] = useState<string | null>(null);
+  const [applyDrawerOpen, setApplyDrawerOpen] = useState(false);
+  const [selectedForApply, setSelectedForApply] = useState<string[]>([]);
+  const [createPrOpen, setCreatePrOpen] = useState(false);
+
+  const toggleSelect = (key: string) => {
+    setSelectedForApply(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -268,6 +281,7 @@ export default function ScanResultsPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <Nav variant="light" />
       <div className="container mx-auto px-4 py-8">
+        <GithubConnectBanner />
         {/* Top Navigation Bar */}
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
@@ -549,12 +563,20 @@ export default function ScanResultsPage() {
                       </span>
                     </div>
                     
+                    {/* Select checkbox */}
+                    <input
+                      type="checkbox"
+                      className="ml-auto h-4 w-4 accent-purple-600"
+                      checked={selectedForApply.includes(uniqueKey)}
+                      onChange={(e) => { e.stopPropagation(); toggleSelect(uniqueKey); }}
+                      onClick={(e) => e.stopPropagation()}
+                    />
                     {/* Chevron - only show when collapsed */}
                     {!isExpanded && (
-                      <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0 ml-auto" />
+                      <ChevronDown className="w-5 h-5 text-gray-400 flex-shrink-0" />
                     )}
                     {isExpanded && (
-                      <ChevronUp className="w-5 h-5 text-gray-400 flex-shrink-0 ml-auto" />
+                      <ChevronUp className="w-5 h-5 text-gray-400 flex-shrink-0" />
                     )}
                   </div>
 
@@ -577,8 +599,22 @@ export default function ScanResultsPage() {
                   </div>
                 </button>
 
-                {isExpanded && (
+                 {isExpanded && (
                   <div className="p-6 border-t border-gray-700 dark:border-gray-700 space-y-4 bg-gray-800 dark:bg-gray-800">
+                    <div className="flex items-center justify-end gap-2">
+                      <button
+                        onClick={() => { setSelectedViolationKey(uniqueKey); setFixModalOpen(true); }}
+                        className="px-4 py-2 rounded-lg text-sm font-medium bg-purple-600 hover:bg-purple-700 text-white"
+                      >
+                        Fix
+                      </button>
+                      <button
+                        onClick={() => { setSelectedForApply([uniqueKey]); setApplyDrawerOpen(true); }}
+                        className="px-4 py-2 rounded-lg text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-200 dark:hover:bg-gray-600"
+                      >
+                        Apply locally
+                      </button>
+                    </div>
                     {violation.fix && (
                       <CodeDiff
                         before={violation.fix.before}
@@ -592,6 +628,56 @@ export default function ScanResultsPage() {
             );
           })}
         </div>
+
+        {/* Sticky bottom action bar for multi-select */}
+        {selectedForApply.length > 0 && (
+          <div className="fixed bottom-4 left-0 right-0 flex justify-center">
+            <div className="flex items-center gap-3 bg-gray-900 text-white rounded-full px-4 py-2 shadow-lg border border-gray-700">
+              <span className="text-sm">{selectedForApply.length} selected</span>
+              <button
+                onClick={() => setApplyDrawerOpen(true)}
+                className="px-3 py-1.5 rounded-full bg-purple-600 hover:bg-purple-700 text-sm"
+              >
+                Apply locally
+              </button>
+              <button
+                onClick={() => setCreatePrOpen(true)}
+                className="px-3 py-1.5 rounded-full bg-blue-600 hover:bg-blue-700 text-sm"
+              >
+                Create PR
+              </button>
+              <button
+                onClick={() => setSelectedForApply([])}
+                className="px-3 py-1.5 rounded-full bg-gray-700 hover:bg-gray-600 text-sm"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+        )}
+
+        {selectedViolationKey && (
+          <FixModal
+            open={fixModalOpen}
+            onClose={() => setFixModalOpen(false)}
+            scanId={data.id}
+            violationKey={selectedViolationKey}
+          />
+        )}
+
+        <ApplyLocallyDrawer
+          open={applyDrawerOpen}
+          onClose={() => setApplyDrawerOpen(false)}
+          scanId={data.id}
+          selectedKeys={selectedForApply}
+        />
+
+        <CreatePrModal
+          open={createPrOpen}
+          onClose={() => setCreatePrOpen(false)}
+          scanId={data.id}
+          selectedKeys={selectedForApply}
+        />
 
         {(!data.violations_data || data.violations_data.length === 0) && (
           <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-8 text-center">

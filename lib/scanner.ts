@@ -68,17 +68,32 @@ export async function scanURL(url: string): Promise<ScanResult> {
     const results = await builder.analyze();
 
     // Process violations
-    const violations = results.violations.map(v => ({
+    const violations = await Promise.all(results.violations.map(async v => ({
       id: v.id,
       impact: IMPACT_MAP[v.impact || 'minor'] || 'minor',
       description: v.description,
       helpUrl: v.helpUrl,
-      nodes: v.nodes.map((node: any) => ({
-        target: Array.isArray(node.target) ? node.target : [String(node.target)],
-        html: node.html,
-        // Capture additional data from axe-core, especially for color-contrast violations
-        // Axe-core provides foregroundColor, backgroundColor, contrastRatio, fontSize in the 'any' field
-        data: v.id === 'color-contrast' && node.any?.[0] 
+      nodes: await Promise.all(v.nodes.map(async (node: any) => {
+        const targetArr = Array.isArray(node.target) ? node.target : [String(node.target)];
+        // Attempt to read optional source hints from DOM for the first selector
+        let sourcePath: string | null = null;
+        let sourceLine: string | null = null;
+        try {
+          const firstSelector = targetArr[0];
+          if (firstSelector) {
+            const { path, line } = await page.evaluate((sel) => {
+              const el = document.querySelector(sel as string) as HTMLElement | null;
+              return {
+                path: el?.getAttribute('data-source-path') || null,
+                line: el?.getAttribute('data-source-line') || null,
+              };
+            }, firstSelector);
+            sourcePath = path;
+            sourceLine = line;
+          }
+        } catch {}
+
+        const extraData = v.id === 'color-contrast' && node.any?.[0]
           ? {
               foregroundColor: node.any[0].data?.fgColor,
               backgroundColor: node.any[0].data?.bgColor,
@@ -86,9 +101,19 @@ export async function scanURL(url: string): Promise<ScanResult> {
               fontSize: node.any[0].data?.fontSize,
               ...node.any[0].data,
             }
-          : (node.any?.[0]?.data || {}),
+          : (node.any?.[0]?.data || {});
+
+        return {
+          target: targetArr,
+          html: node.html,
+          data: {
+            ...extraData,
+            sourcePath: sourcePath || undefined,
+            sourceLine: sourceLine || undefined,
+          },
+        };
       })),
-    })) as Violation[];
+    }))) as Violation[];
 
     // Calculate compliance score
     const total = results.violations.length + results.passes.length;
